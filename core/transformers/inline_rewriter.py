@@ -1,7 +1,8 @@
 from ast import *
 from core.rewriter import RewriterCommand
 from copy import deepcopy
-class InlineTransformer(NodeTransformer):
+
+class InlineVariableTransformer(NodeTransformer):
 
     def __init__(self):
         self.var_values = {}
@@ -12,7 +13,7 @@ class InlineTransformer(NodeTransformer):
             var_name = node.targets[0].id
             self.var_values[var_name] = node.value
             self.var_usage[var_name] = self.var_usage.get(var_name, 0)
-        return node  # return node, not generic_visit(node) here
+        return node  # Devolver el nodo original
 
     def visit_Name(self, node):
         if isinstance(node.ctx, Load) and node.id in self.var_usage:
@@ -20,7 +21,7 @@ class InlineTransformer(NodeTransformer):
         return node
 
     def visit_FunctionDef(self, node):
-        # First pass: gather all variable usages
+        # Primer paso: recopilar todos los usos de variables
         self.generic_visit(node)
 
         changed = True
@@ -45,5 +46,5 @@ class InlineTransformer(NodeTransformer):
 
 class InlineCommand(RewriterCommand):
     def apply(self, node):
-        transformer = InlineTransformer()
+        transformer = InlineVariableTransformer()
         return transformer.visit(node)
